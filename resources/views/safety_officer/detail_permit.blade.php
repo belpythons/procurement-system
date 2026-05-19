@@ -16,7 +16,6 @@
             </div>
         </div>
         
-        <!-- Status Badge -->
         @php
             $statusColor = match($permit->status) {
                 'Pending' => 'bg-yellow-100 text-yellow-800 border-yellow-300',
@@ -30,6 +29,39 @@
             Status Terkini: {{ $permit->status }}
         </div>
     </div>
+
+    <!-- Safety Officer Action Form (Only if Pending or Disetujui AND no evaluation yet) -->
+    @if(in_array($permit->status, ['Pending', 'Disetujui']) && is_null($permit->evaluasi_risiko))
+    <div class="bg-orange-50 border-2 border-orange-300 rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+            <i class="ph-fill ph-shield-check text-orange-600 text-2xl"></i>
+            <h3 class="text-lg font-bold text-orange-900">Form Evaluasi K3 (Safety Officer)</h3>
+        </div>
+        
+        <form method="POST" action="{{ route('safety_officer.permit.evaluasi', $permit->id) }}">
+            @csrf
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div class="col-span-1">
+                    <label for="tingkat_risiko" class="block mb-2 text-sm font-medium text-gray-900">Penilaian Final Tingkat Risiko <span class="text-red-500">*</span></label>
+                    <select id="tingkat_risiko" name="tingkat_risiko" required class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5">
+                        <option value="" disabled selected>Pilih Tingkat Risiko...</option>
+                        <option value="Risiko Rendah">Risiko Rendah</option>
+                        <option value="Risiko Sedang">Risiko Sedang</option>
+                        <option value="Risiko Tinggi">Risiko Tinggi</option>
+                    </select>
+                </div>
+                <div class="col-span-1 md:col-span-2">
+                    <label for="catatan_safety" class="block mb-2 text-sm font-medium text-gray-900">Catatan Evaluasi / Rekomendasi Tambahan <span class="text-red-500">*</span></label>
+                    <textarea id="catatan_safety" name="catatan_safety" required rows="3" class="block p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-orange-500 focus:border-orange-500" placeholder="Tuliskan rekomendasi APD tambahan, prosedur LOTO, atau bahaya spesifik..."></textarea>
+                    @error('catatan_safety') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+            </div>
+            <button type="submit" class="text-white bg-orange-600 hover:bg-orange-700 focus:ring-4 focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 flex items-center gap-2">
+                <i class="ph-bold ph-floppy-disk"></i> Simpan Evaluasi K3
+            </button>
+        </form>
+    </div>
+    @endif
 
     <!-- Grid Info -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -118,11 +150,11 @@
                             </span>
                         </div>
                         <div class="border-t pt-3">
-                            <p class="text-xs text-gray-500 mb-1">Evaluasi Safety Officer:</p>
+                            <p class="text-xs text-gray-500 mb-1">Evaluasi Safety Officer Anda:</p>
                             @if($permit->evaluasi_risiko)
                                 <p class="text-sm text-gray-800 font-medium">{{ $permit->evaluasi_risiko }}</p>
                             @else
-                                <p class="text-xs text-gray-400 italic">Belum ada evaluasi resmi.</p>
+                                <p class="text-xs text-gray-400 italic text-red-500">Anda belum memberikan evaluasi.</p>
                             @endif
                         </div>
                     </div>
@@ -184,7 +216,7 @@
                             <p class="text-sm font-semibold text-gray-900">{{ $permit->safetyOfficer->name ?? '-' }}</p>
                             @if($permit->catatan_safety)
                                 <div class="mt-2 p-2 bg-gray-50 border border-gray-100 rounded text-xs text-gray-700">
-                                    <span class="font-medium text-gray-900">Catatan Tambahan:</span><br>
+                                    <span class="font-medium text-gray-900">Catatan Anda:</span><br>
                                     {{ $permit->catatan_safety }}
                                 </div>
                             @endif

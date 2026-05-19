@@ -16,7 +16,6 @@
             </div>
         </div>
         
-        <!-- Status Badge -->
         @php
             $statusColor = match($permit->status) {
                 'Pending' => 'bg-yellow-100 text-yellow-800 border-yellow-300',
@@ -30,6 +29,51 @@
             Status Terkini: {{ $permit->status }}
         </div>
     </div>
+
+    <!-- Supervisor Action Form (Only if Pending or Disetujui) -->
+    @if($permit->status === 'Pending')
+    <div class="bg-blue-50 border-2 border-blue-300 rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+            <i class="ph-fill ph-check-square-offset text-blue-600 text-2xl"></i>
+            <h3 class="text-lg font-bold text-blue-900">Aksi Persetujuan Supervisor</h3>
+        </div>
+        
+        <form id="approval-form" method="POST" action="">
+            @csrf
+            <div class="mb-4">
+                <label for="catatan_supervisor" class="block mb-2 text-sm font-medium text-gray-900">Catatan Supervisor (Opsional untuk setuju, Wajib untuk tolak)</label>
+                <textarea id="catatan_supervisor" name="catatan_supervisor" rows="3" class="block p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Tuliskan arahan tambahan atau alasan penolakan..."></textarea>
+                @error('catatan_supervisor') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" onclick="document.getElementById('approval-form').action='{{ route('supervisor.permit.approve', $permit->id) }}'" class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 flex items-center gap-2">
+                    <i class="ph-bold ph-check"></i> Setujui (Approve)
+                </button>
+                <button type="submit" onclick="document.getElementById('approval-form').action='{{ route('supervisor.permit.reject', $permit->id) }}'" class="text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 flex items-center gap-2">
+                    <i class="ph-bold ph-x"></i> Tolak (Reject)
+                </button>
+            </div>
+        </form>
+    </div>
+    @elseif($permit->status === 'Disetujui')
+    <div class="bg-green-50 border-2 border-green-300 rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="ph-fill ph-flag-checkered text-green-600 text-2xl"></i>
+                <div>
+                    <h3 class="text-lg font-bold text-green-900">Selesaikan Pekerjaan</h3>
+                    <p class="text-sm text-green-700">Tandai permit ini sebagai Selesai jika pekerjaan fisik di lapangan telah rampung.</p>
+                </div>
+            </div>
+            <form method="POST" action="{{ route('supervisor.permit.selesai', $permit->id) }}" onsubmit="return confirm('Pekerjaan sudah dipastikan selesai?')">
+                @csrf
+                <button type="submit" class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 flex items-center gap-2">
+                    <i class="ph-bold ph-check-square"></i> Tandai Selesai
+                </button>
+            </form>
+        </div>
+    </div>
+    @endif
 
     <!-- Grid Info -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -165,7 +209,7 @@
                             <p class="text-sm font-semibold text-gray-900">{{ $permit->supervisor->name ?? '-' }}</p>
                             @if($permit->catatan_supervisor)
                                 <div class="mt-2 p-2 bg-gray-50 border border-gray-100 rounded text-xs text-gray-700">
-                                    <span class="font-medium text-gray-900">Catatan:</span><br>
+                                    <span class="font-medium text-gray-900">Catatan Anda:</span><br>
                                     {{ $permit->catatan_supervisor }}
                                 </div>
                             @endif
