@@ -67,7 +67,7 @@ class AuthController extends Controller
 
             // HANDLE BANYAK VARIASI SAFETY
             if($role == 'safety' || $role == 'safety officer'){
-                return redirect('/safety/dashboard');
+                return redirect('/safety-officer/dashboard');
             }
 
             // =========================
