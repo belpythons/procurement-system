@@ -6,135 +6,106 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user);
 
 const navItems = [
-    { href: '/dashboard',  label: 'Dashboard' },
-    { href: '/rp',         label: 'Request Purchasing' },
-    { href: '/te',         label: 'Technical Eval' },
-    { href: '/rete',       label: 'Re-Technical Eval' },
-    { href: '/po',         label: 'Purchase Order' },
-    { href: '/report',     label: 'Report', active: true },
+    { href: '/dashboard', label: 'Dashboard', icon: 'bi bi-speedometer2' },
+    { href: '/rp',        label: 'Request Purchasing', icon: 'bi bi-file-earmark-text' },
+    { href: '/te',        label: 'Technical Evaluation', icon: 'bi bi-clipboard-check' },
+    { href: '/rete',      label: 'Re-Technical Evaluation', icon: 'bi bi-arrow-repeat' },
+    { href: '/po',        label: 'Purchase Order', icon: 'bi bi-bag-check' },
+    { href: '/report',    label: 'Laporan', icon: 'bi bi-bar-chart-fill', active: true },
 ];
+
+const csrfToken = computed(() => {
+    return document.querySelector('meta[name="csrf-token"]')?.content || '';
+});
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-100">
-
+    <div 
+        class="min-h-screen bg-cover bg-center bg-fixed bg-no-repeat"
+        style="background-image: url('/images/kmi2.jpg');"
+    >
         <!-- ═══════════════════════════════════════════ -->
-        <!-- TOP NAVBAR — Clean UI (matches layouts/navigation.blade.php) -->
+        <!-- SIDEBAR — Matches Blade Layout             -->
         <!-- ═══════════════════════════════════════════ -->
-        <nav class="bg-white border-b border-gray-100 shadow">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-
-                    <!-- Left: Logo + Nav Links -->
-                    <div class="flex">
-                        <div class="shrink-0 flex items-center">
-                            <a href="/dashboard" class="text-lg font-semibold text-gray-800 tracking-tight">
-                                Procurement System
-                            </a>
-                        </div>
-
-                        <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                            <a
-                                v-for="item in navItems"
-                                :key="item.href"
-                                :href="item.href"
-                                :class="[
-                                    'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition ease-in-out duration-150',
-                                    item.active
-                                        ? 'border-indigo-500 text-gray-900 focus:border-indigo-700'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:text-gray-700 focus:border-gray-300'
-                                ]"
-                            >
-                                {{ item.label }}
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Right: User Dropdown -->
-                    <div class="hidden sm:flex sm:items-center sm:ms-6">
-                        <div class="relative">
-                            <span class="text-sm font-medium text-gray-500">
-                                {{ user?.name || 'Admin' }}
-                            </span>
-                        </div>
-                        <form method="POST" action="/logout" class="ms-4">
-                            <input type="hidden" name="_token" :value="csrfToken">
-                            <button
-                                type="submit"
-                                class="text-sm font-medium text-gray-500 hover:text-gray-700 transition ease-in-out duration-150"
-                            >
-                                Log Out
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Mobile Hamburger -->
-                    <div class="-me-2 flex items-center sm:hidden">
-                        <button
-                            @click="mobileOpen = !mobileOpen"
-                            class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition ease-in-out duration-150"
-                        >
-                            <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
-                    </div>
+        <div class="sidebar w-full md:w-[240px] h-auto md:h-screen bg-[#2f3f52] relative md:fixed top-0 left-0 z-[100] flex flex-col justify-between text-white">
+            <div>
+                <!-- Sidebar Header (Logo) -->
+                <div class="sidebar-header p-[25px_20px] text-center border-b border-white/10">
+                    <img src="/images/kmi-logo.png" alt="KMI Logo" class="w-[150px] mx-auto" />
                 </div>
-            </div>
 
-            <!-- Mobile Nav (responsive) -->
-            <div v-if="mobileOpen" class="sm:hidden">
-                <div class="pt-2 pb-3 space-y-1">
+                <!-- Sidebar Menu Links -->
+                <div class="sidebar-menu pt-[10px]">
                     <a
                         v-for="item in navItems"
                         :key="item.href"
                         :href="item.href"
                         :class="[
-                            'block w-full ps-3 pe-4 py-2 border-l-4 text-start text-base font-medium transition ease-in-out duration-150',
+                            'block py-[15px] px-[22px] text-[15px] transition duration-300 ease-in-out flex items-center gap-3',
                             item.active
-                                ? 'border-indigo-400 text-indigo-700 bg-indigo-50 focus:text-indigo-800 focus:bg-indigo-100 focus:border-indigo-700'
-                                : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300'
+                                ? 'bg-[#456ea4] text-white font-semibold'
+                                : 'text-[#dce4ec] hover:bg-[#3e5670] hover:text-white'
                         ]"
                     >
-                        {{ item.label }}
+                        <i :class="item.icon" class="text-[16px]"></i>
+                        <span>{{ item.label }}</span>
                     </a>
                 </div>
             </div>
-        </nav>
 
-        <!-- ═══════════════════════════════════════════ -->
-        <!-- PAGE HEADER                                -->
-        <!-- ═══════════════════════════════════════════ -->
-        <header class="bg-white shadow">
-            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                    Report Center
-                </h2>
+            <!-- Logout Section -->
+            <div class="logout p-[25px_20px] text-center mt-auto">
+                <form method="POST" action="/logout" class="w-full flex justify-center">
+                    <input type="hidden" name="_token" :value="csrfToken" />
+                    <button
+                        type="submit"
+                        class="w-[180px] border-none bg-[#dc3545] hover:bg-[#bb2d3b] text-white p-[12px] rounded-[12px] font-bold transition duration-300 hover:scale-[1.03] flex items-center justify-center gap-2"
+                    >
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
+                <div class="admin-text mt-[12px] text-white font-bold text-[16px] text-center">
+                    {{ user?.name || 'Admin' }}
+                </div>
             </div>
-        </header>
+        </div>
 
         <!-- ═══════════════════════════════════════════ -->
         <!-- MAIN CONTENT AREA                          -->
         <!-- ═══════════════════════════════════════════ -->
-        <main class="py-6">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <slot />
+        <div class="content ml-0 md:ml-[240px] p-[15px] md:p-[25px]">
+            <!-- Topbar (Identical styling to Blade layout) -->
+            <div class="topbar bg-[#264a67] rounded-[20px] md:rounded-[45px] p-[22px_35px] w-full mb-[10px] text-white sticky top-[10px] z-[99]">
+                <div class="header-title text-[16px] font-bold">
+                    PROCUREMENT SYSTEM - PT.KMI
+                </div>
             </div>
-        </main>
+
+            <!-- Page Title -->
+            <div class="welcome-text mt-[5px] ml-[6px] mb-[8px] text-[30px] text-black font-extrabold">
+                LAPORAN (REPORT)
+            </div>
+
+            <!-- Slot content -->
+            <main>
+                <slot />
+            </main>
+        </div>
     </div>
 </template>
 
-<script>
-export default {
-    data() {
-        return {
-            mobileOpen: false,
-        };
-    },
-    computed: {
-        csrfToken() {
-            return document.querySelector('meta[name="csrf-token"]')?.content || '';
-        }
+<style scoped>
+/* Specific layout properties to match original fixed setup */
+@media(max-width:768px){
+    .sidebar {
+        width: 100% !important;
+        height: auto !important;
+        position: relative !important;
     }
-};
-</script>
+    .content {
+        margin-left: 0 !important;
+        padding: 15px !important;
+    }
+}
+</style>
