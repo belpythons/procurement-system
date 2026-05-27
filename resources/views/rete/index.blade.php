@@ -366,7 +366,7 @@ textarea.form-control{
                 Purchase Order
             </a>
 
-            <a href="#">
+            <a href="{{ route('report.index') }}">
                 <i class="bi bi-bar-chart-fill"></i>
                 Laporan
             </a>
