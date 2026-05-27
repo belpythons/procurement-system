@@ -1,163 +1,288 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\RegisterController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\PermitController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\ImportController;
-use App\Http\Controllers\Admin\UserController;
 
-// ══════════════════════════════════════════════════════════════
-// GUEST ROUTES (Unauthenticated)
-// ══════════════════════════════════════════════════════════════
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RequestPurchasingController;
+use App\Http\Controllers\TechnicalEvaluationController;
+use App\Http\Controllers\ReTechnicalEvaluationController;
+use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\ProcurementController;
+use App\Http\Controllers\LaporanController;
 
-Route::get('/', fn () => redirect('/login'));
+use App\Models\RequestPurchasing;
+use App\Models\TechnicalEvaluation;
+use App\Models\ReTechnicalEvaluation;
+use App\Models\PurchaseOrder;
+use App\Models\Procurement;
 
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+/*
+|--------------------------------------------------------------------------
+| HALAMAN AWAL
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/register', [RegisterController::class, 'showRegister'])->name('register');
-Route::post('/register', [RegisterController::class, 'register']);
-
-
-// ══════════════════════════════════════════════════════════════
-// ADMIN ROUTES
-// Prefix: /admin  |  Middleware: auth + role:admin
-// ══════════════════════════════════════════════════════════════
-
-Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {
-
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'admin'])->name('dashboard');
-
-    // Manajemen User
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::post('/users/store', [UserController::class, 'store'])->name('users.store');
-    Route::post('/users/update/{id}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/users/delete/{id}', [UserController::class, 'delete'])->name('users.delete');
-
-    // Profile
-    Route::get('/profile', [UserController::class, 'profile'])->name('profile');
-    Route::post('/update-profile', [UserController::class, 'updateProfile'])->name('profile.update');
-
-    // Monitoring Permit (aktif: Pending & Disetujui)
-    Route::get('/monitoring', [PermitController::class, 'monitoring'])->name('monitoring');
-
-    // Riwayat Permit (final: Selesai & Ditolak)
-    Route::get('/riwayat', [PermitController::class, 'riwayat'])->name('riwayat');
-
-    // Laporan (semua permit + filter)
-    Route::get('/laporan', [PermitController::class, 'laporan'])->name('laporan');
-
-    // Detail Permit
-    Route::get('/permit/{permit}', [PermitController::class, 'detail'])->name('permit.detail');
-
-    // Export (Excel & PDF)
-    Route::get('/laporan/export-excel', [ReportController::class, 'exportExcel'])->name('laporan.export.excel');
-    Route::get('/laporan/export-pdf', [ReportController::class, 'exportPdf'])->name('laporan.export.pdf');
-
-    // Import (Khusus Admin)
-    Route::get('/laporan/template', [ImportController::class, 'downloadTemplate'])->name('laporan.template');
-    Route::post('/laporan/import', [ImportController::class, 'import'])->name('laporan.import');
+Route::get('/', function () {
+    return redirect('/login');
 });
 
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD
+|--------------------------------------------------------------------------
+*/
 
-// ══════════════════════════════════════════════════════════════
-// PEKERJA ROUTES
-// Prefix: /pekerja  |  Middleware: auth + role:pekerja
-// ══════════════════════════════════════════════════════════════
+Route::middleware('auth')->get('/dashboard', function () {
 
-Route::prefix('pekerja')->middleware(['auth', 'role:pekerja'])->name('pekerja.')->group(function () {
+    $status = request('status');
 
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'pekerja'])->name('dashboard');
+    /*
+    |----------------------------------------
+    | TOTAL DASHBOARD (REAL FROM PROCUREMENT)
+    |----------------------------------------
+    */
+    $totalRP = \App\Models\Procurement::where('status', 'Request Purchasing')->count();
+    $totalTE = \App\Models\Procurement::where('status', 'Technical Evaluation')->count();
+    $totalRETE = \App\Models\Procurement::where('status', 'Re-Technical Evaluation')->count();
+    $totalPO = \App\Models\Procurement::where('status', 'Purchase Order')->count();
 
-    // Buat Permit (form + submit)
-    Route::get('/buat-permit', [PermitController::class, 'create'])->name('permit.create');
-    Route::post('/buat-permit', [PermitController::class, 'store'])->name('permit.store');
+    /*
+    |----------------------------------------
+    | DATA PROCUREMENT (REAL SYSTEM 1 TABLE)
+    |----------------------------------------
+    */
+    $procurements = \App\Models\Procurement::when($status, function ($query) use ($status) {
+            return $query->where('status', $status);
+        })
+        ->orderBy('id', 'desc')
+        ->get()
+        ->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'kode' => $item->kode,
+                'barang' => $item->barang,
+                'status' => $item->status,
+                'tanggal' => $item->tanggal,
+            ];
+        });
 
-    // Edit Permit (hanya jika masih Pending)
-    Route::get('/edit-permit/{permit}', [PermitController::class, 'edit'])->name('permit.edit');
-    Route::put('/edit-permit/{permit}', [PermitController::class, 'update'])->name('permit.update');
+    /*
+    |----------------------------------------
+    | RETURN VIEW (Pastikan melempar variabel total dengan benar)
+    |----------------------------------------
+    */
+    return view('dashboard', compact(
+        'totalRP',
+        'totalTE',
+        'totalRETE',
+        'totalPO',
+        'procurements'
+    ));
 
-    // Riwayat Permit
-    Route::get('/riwayat', [PermitController::class, 'riwayat'])->name('riwayat');
+})->name('dashboard');
 
-    // Laporan Permit
-    Route::get('/laporan', [PermitController::class, 'laporan'])->name('laporan');
+/*
+|--------------------------------------------------------------------------
+| PROCUREMENT CRUD (FULL BARU)
+|--------------------------------------------------------------------------
+*/
 
-    // Detail Permit
-    Route::get('/permit/{permit}', [PermitController::class, 'detail'])->name('permit.detail');
+Route::middleware('auth')->group(function () {
 
-    // Export (Excel & PDF)
-    Route::get('/laporan/export-excel', [ReportController::class, 'exportExcel'])->name('laporan.export.excel');
-    Route::get('/laporan/export-pdf', [ReportController::class, 'exportPdf'])->name('laporan.export.pdf');
+    Route::get('/procurement', [ProcurementController::class, 'index'])
+        ->name('procurement.index');
+
+    Route::get('/procurement/create', [ProcurementController::class, 'create'])
+        ->name('procurement.create');
+
+    Route::post('/procurement/store', [ProcurementController::class, 'store'])
+        ->name('procurement.store');
+
+    Route::get('/procurement/edit/{id}', [ProcurementController::class, 'edit'])
+        ->name('procurement.edit');
+
+    // --- PASTIKAN PROSES UPDATE & DELETE MENGARAH KE CONTROLLER YANG BENAR ---
+    Route::put('/procurement/update/{id}', [ProcurementController::class, 'update'])
+        ->name('procurement.update');
+
+    Route::post('/procurement/delete/{id}', [ProcurementController::class, 'destroy'])
+        ->name('procurement.delete');
+
 });
 
+/*
+|--------------------------------------------------------------------------
+| PROFILE
+|--------------------------------------------------------------------------
+*/
 
-// ══════════════════════════════════════════════════════════════
-// SUPERVISOR ROUTES
-// Prefix: /supervisor  |  Middleware: auth + role:supervisor
-// ══════════════════════════════════════════════════════════════
+Route::middleware('auth')->group(function () {
 
-Route::prefix('supervisor')->middleware(['auth', 'role:supervisor'])->name('supervisor.')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
 
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'supervisor'])->name('dashboard');
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
 
-    // Monitoring Permit
-    Route::get('/monitoring', [PermitController::class, 'monitoring'])->name('monitoring');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
 
-    // Riwayat Permit
-    Route::get('/riwayat', [PermitController::class, 'riwayat'])->name('riwayat');
-
-    // Laporan Permit
-    Route::get('/laporan', [PermitController::class, 'laporan'])->name('laporan');
-
-    // Detail Permit
-    Route::get('/permit/{permit}', [PermitController::class, 'detail'])->name('permit.detail');
-
-    // Action: Approve / Reject / Selesai
-    Route::post('/permit/{permit}/approve', [PermitController::class, 'approve'])->name('permit.approve');
-    Route::post('/permit/{permit}/reject', [PermitController::class, 'reject'])->name('permit.reject');
-    Route::post('/permit/{permit}/selesai', [PermitController::class, 'selesai'])->name('permit.selesai');
-
-    // Export (Excel & PDF)
-    Route::get('/laporan/export-excel', [ReportController::class, 'exportExcel'])->name('laporan.export.excel');
-    Route::get('/laporan/export-pdf', [ReportController::class, 'exportPdf'])->name('laporan.export.pdf');
 });
 
+/*
+|--------------------------------------------------------------------------
+| REQUEST PURCHASING (RP)
+|--------------------------------------------------------------------------
+*/
 
-// ══════════════════════════════════════════════════════════════
-// SAFETY OFFICER ROUTES
-// Prefix: /safety-officer  |  Middleware: auth + role:safety_officer
-// (Middleware menormalisasi "safety_officer" → "safety officer")
-// ══════════════════════════════════════════════════════════════
+Route::middleware(['auth'])->group(function () {
+    
+    Route::get('/rp', [RequestPurchasingController::class, 'index'])
+        ->name('rp.index');
+    
+    Route::post('/rp/store', [RequestPurchasingController::class, 'store'])
+        ->name('rp.store');
+    
+    Route::put('/rp/update/{id}', [RequestPurchasingController::class, 'update'])
+        ->name('rp.update');
 
-Route::prefix('safety-officer')->middleware(['auth', 'role:safety_officer'])->name('safety_officer.')->group(function () {
+    Route::delete('/rp/delete/{id}', [RequestPurchasingController::class, 'destroy'])
+        ->name('rp.delete');
 
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'safetyOfficer'])->name('dashboard');
-
-    // Monitoring Permit
-    Route::get('/monitoring', [PermitController::class, 'monitoring'])->name('monitoring');
-
-    // Riwayat Permit
-    Route::get('/riwayat', [PermitController::class, 'riwayat'])->name('riwayat');
-
-    // Laporan Permit
-    Route::get('/laporan', [PermitController::class, 'laporan'])->name('laporan');
-
-    // Detail Permit
-    Route::get('/permit/{permit}', [PermitController::class, 'detail'])->name('permit.detail');
-
-    // Action: Evaluasi Risiko
-    Route::post('/permit/{permit}/evaluasi', [PermitController::class, 'evaluasi'])->name('permit.evaluasi');
-
-    // Export (Excel & PDF)
-    Route::get('/laporan/export-excel', [ReportController::class, 'exportExcel'])->name('laporan.export.excel');
-    Route::get('/laporan/export-pdf', [ReportController::class, 'exportPdf'])->name('laporan.export.pdf');
 });
+
+/*
+|--------------------------------------------------------------------------
+| TECHNICAL EVALUATION (TE)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | HALAMAN TE
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/te', [TechnicalEvaluationController::class, 'index'])
+        ->name('te.index');
+
+    /*
+    |--------------------------------------------------------------------------
+    | FORM CREATE
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/te/create', [TechnicalEvaluationController::class, 'create'])
+        ->name('te.create');
+
+    /*
+    |--------------------------------------------------------------------------
+    | SIMPAN DATA TE
+    |--------------------------------------------------------------------------
+    */
+    Route::post('/te/store', [TechnicalEvaluationController::class, 'store'])
+        ->name('te.store');
+
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT DATA TE
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/te/edit/{id}', [TechnicalEvaluationController::class, 'edit'])
+        ->name('te.edit');
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE DATA TE
+    |--------------------------------------------------------------------------
+    */
+    Route::post('/te/update/{id}', [TechnicalEvaluationController::class, 'update'])
+        ->name('te.update');
+
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE DATA TE
+    |--------------------------------------------------------------------------
+    */
+    Route::delete('/te/delete/{id}', [TechnicalEvaluationController::class, 'destroy'])
+        ->name('te.delete');
+       
+
+});
+
+/*
+|--------------------------------------------------------------------------
+| RE-TECHNICAL EVALUATION (RE-TE)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/rete', [ReTechnicalEvaluationController::class, 'index'])
+        ->name('rete.index');
+
+    Route::get('/rete/create', [ReTechnicalEvaluationController::class, 'create'])
+        ->name('rete.create');
+
+    Route::post('/rete/store', [ReTechnicalEvaluationController::class, 'store'])
+        ->name('rete.store');
+
+    Route::get('/rete/edit/{id}', [ReTechnicalEvaluationController::class, 'edit'])
+        ->name('rete.edit');
+
+    Route::post('/rete/update/{id}', [ReTechnicalEvaluationController::class, 'update'])
+        ->name('rete.update');
+
+    Route::delete('/rete/delete/{id}', [ReTechnicalEvaluationController::class, 'destroy'])
+        ->name('rete.delete');
+
+});
+
+/*
+|--------------------------------------------------------------------------
+| PURCHASE ORDER (PO)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/po', [PurchaseOrderController::class, 'index'])
+        ->name('po.index');
+
+    Route::get('/po/create', [PurchaseOrderController::class, 'create'])
+        ->name('po.create');
+
+    Route::post('/po/store', [PurchaseOrderController::class, 'store'])
+        ->name('po.store');
+
+    Route::get('/po/edit/{id}', [PurchaseOrderController::class, 'edit'])
+        ->name('po.edit');
+
+    Route::post('/po/update/{id}', [PurchaseOrderController::class, 'update'])
+        ->name('po.update');
+
+    Route::delete('/po/delete/{id}', [PurchaseOrderController::class, 'destroy'])
+        ->name('po.delete');
+
+});
+
+/*
+|--------------------------------------------------------------------------
+| LAPORAN
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/laporan', [LaporanController::class, 'index'])
+        ->name('laporan.index');
+
+});
+
+/*
+|--------------------------------------------------------------------------
+| AUTH
+|--------------------------------------------------------------------------
+*/
+
+require __DIR__.'/auth.php';
