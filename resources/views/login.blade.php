@@ -4,292 +4,202 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Login - Permit To Work PT KMI</title>
+<title>Login - Pengadaan Barang PT KMI</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
 <style>
 
+/* RESET */
 *{
 box-sizing:border-box;
+font-family:Arial, sans-serif;
 }
 
 body{
 margin:0;
-font-family:Arial;
+padding:0;
 min-height:100vh;
-background:#000;
-display:flex;
-flex-direction:column;
-}
-
-/* HEADER */
-
-.top-header{
-background:#384b6e;
-color:white;
-padding:15px 40px;
+overflow:hidden;
+background:#0b1220;
 display:flex;
 align-items:center;
-height:180px;
-
-clip-path: polygon(0 0, 100% 0, 100% 60%, 0 100%);
-
-z-index:10;
-position:relative;
+justify-content:center;
 }
 
-.top-header img{
-width:220px;
-margin-right:20px;
+/* BACKGROUND ANIMATION */
+.bg{
+position:fixed;
+width:100%;
+height:100%;
+top:0;
+left:0;
+background:url("{{ asset('images/kmi1.jpg') }}") center/cover no-repeat;
+filter:blur(2px) brightness(0.6);
+transform:scale(1.1);
+z-index:0;
+animation:zoom 20s infinite alternate;
 }
 
-.top-header h2{
-position:absolute;
-left:50%;
-transform:translateX(-50%);
-margin:0;
-font-weight:bold;
-letter-spacing:1px;
-font-size:40px;
+@keyframes zoom{
+0%{transform:scale(1.1);}
+100%{transform:scale(1.2);}
 }
 
-/* MAIN */
-
-.main-container{
-flex:1;
-display:flex;
-margin-top:-80px;
-flex-wrap:wrap;
-position:relative;
-}
-
-/* 🔥 BACKGROUND FIX (NO CROP + FULL) */
-
-.left-side{
-position:absolute;
+/* OVERLAY DARK */
+.overlay{
+position:fixed;
 top:0;
 left:0;
 width:100%;
 height:100%;
+background:rgba(0,0,0,0.4);
 z-index:1;
-background-image:url("{{ asset('images/kmi1.jpg') }}");
-background-size:cover;
-background-position:75% center;
-background-repeat:no-repeat;
-
-/* 🔥 INI YANG DITAMBAH */
-transform: scaleX(-1);
 }
 
-/* OVERLAY */
-.left-side::after{
-content:"";
-position:absolute;
+/* LOGIN CARD GLASS */
+.login-box{
+position:relative;
+z-index:2;
 width:100%;
-height:100%;
-background:rgba(0,0,0,0.2); /* 🔥 LEBIH TERANG */
-pointer-events:none; /* 🔥 WAJIB */
+max-width:380px;
+padding:35px;
+border-radius:18px;
+
+/* GLASS EFFECT */
+background:rgba(255,255,255,0.10);
+backdrop-filter:blur(12px);
+-webkit-backdrop-filter:blur(12px);
+
+border:1px solid rgba(255,255,255,0.2);
+box-shadow:0 20px 40px rgba(0,0,0,0.4);
+
+/* FADE ANIMATION */
+animation:fadeIn 1s ease;
 }
 
-/* FORM HARUS DI ATAS */
-.right-side{
-z-index:5;
+@keyframes fadeIn{
+from{
+opacity:0;
+transform:translateY(30px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
 }
 
-/* overlay biar kontras */
-.left-side::after{
-content:"";
-position:absolute;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.25);
-}
-
-/* LOGIN AREA */
-
-.right-side{
-width:420px;
-max-width:100%;
-display:flex;
-align-items:center;
-justify-content:center;
-padding:30px;
-
-/* overlay */
-position:absolute;
-top:50%;
-right:5%;
-transform:translateY(-50%);
-z-index:5;
-
-background:transparent;
-}
-
-/* LOGIN CARD */
-
-.login-card{
-background:rgba(255,255,255,0.15);
-backdrop-filter:blur(6px);
-padding:40px;
-border-radius:12px;
-width:100%;
-max-width:340px;
-box-shadow:0 10px 30px rgba(0,0,0,0.3);
-}
-
-/* LOGIN TABS */
-
-.login-tabs{
-display:flex;
-border-bottom:2px solid rgba(255,255,255,0.3);
-margin-bottom:20px;
-}
-
-.login-tabs div{
-margin-right:20px;
-padding-bottom:10px;
-cursor:pointer;
+/* HEADER TEXT */
+.title{
+text-align:center;
+color:#fff;
 font-weight:bold;
-color:#ddd;
+margin-bottom:5px;
+letter-spacing:1px;
 }
 
-.login-tabs .active{
-color:#2d6cdf;
-border-bottom:3px solid #2d6cdf;
+.subtitle{
+text-align:center;
+color:#cfd8ff;
+font-size:13px;
+margin-bottom:25px;
 }
 
 /* INPUT */
-
-.form-group{
-margin-bottom:20px;
-}
-
-.input-icon{
+.input-group{
+margin-bottom:18px;
 position:relative;
 }
 
-.input-icon i{
+.input-group i{
 position:absolute;
-left:10px;
 top:50%;
+left:12px;
 transform:translateY(-50%);
-color:#555;
+color:#aaa;
 }
 
-.input-icon input{
-padding-left:35px;
-border-radius:6px;
+.input-group input{
+width:100%;
+padding:12px 12px 12px 38px;
+border-radius:10px;
+border:none;
+outline:none;
+background:rgba(255,255,255,0.15);
+color:#fff;
+transition:0.3s;
+}
+
+.input-group input:focus{
+background:rgba(255,255,255,0.25);
+}
+
+/* PLACEHOLDER */
+input::placeholder{
+color:#ddd;
 }
 
 /* REMEMBER */
-
 .remember{
 display:flex;
 justify-content:space-between;
-font-size:14px;
+align-items:center;
+font-size:13px;
+color:#ddd;
 margin-bottom:20px;
 flex-wrap:wrap;
-gap:5px;
-color:#fff;
+gap:8px;
+}
+
+.remember a{
+color:#8ab4ff;
+text-decoration:none;
 }
 
 /* BUTTON */
-
 .login-btn{
 width:100%;
-background:#2d6cdf;
-border:none;
 padding:12px;
+border:none;
+border-radius:10px;
+background:#3b82f6;
 color:white;
 font-weight:bold;
-border-radius:6px;
+cursor:pointer;
+transition:0.3s;
+display:flex;
+align-items:center;
+justify-content:center;
+gap:10px;
 }
 
 .login-btn:hover{
-background:#1d4fa8;
+background:#2563eb;
+transform:scale(1.03);
 }
 
-/* ========================= */
+/* LOADING SPINNER */
+.spinner{
+display:none;
+width:18px;
+height:18px;
+border:2px solid #fff;
+border-top:2px solid transparent;
+border-radius:50%;
+animation:spin 0.8s linear infinite;
+}
+
+@keyframes spin{
+to{transform:rotate(360deg);}
+}
+
 /* RESPONSIVE */
-/* ========================= */
-
-@media (max-width:992px){
-
-.top-header h2{
-font-size:28px;
-}
-
-.top-header img{
-width:180px;
-}
-
-.right-side{
-right:50%;
-transform:translate(50%,-50%);
-}
-
-}
-
-@media (max-width:768px){
-
-.top-header{
-height:140px;
-padding:10px 20px;
-}
-
-.top-header img{
-width:150px;
-}
-
-.top-header h2{
-font-size:22px;
-}
-
-.main-container{
-margin-top:-40px;
-flex-direction:column;
-}
-
-/* mobile tetap aman */
-.left-side{
-position:relative;
-height:260px;
-background:
-url("{{ asset('images/k.jpg') }}") center/contain no-repeat;
-}
-
-.right-side{
-position:relative;
-top:auto;
-right:auto;
-transform:none;
-width:100%;
-padding:20px;
-justify-content:center;
-}
-
-.login-card{
-margin-top:-60px;
-}
-
-}
-
 @media (max-width:480px){
-
-.top-header img{
-width:120px;
-}
-
-.top-header h2{
-font-size:18px;
-}
-
-.login-card{
+.login-box{
+margin:20px;
 padding:25px;
 }
-
 }
 
 </style>
@@ -298,58 +208,52 @@ padding:25px;
 
 <body>
 
-<!-- HEADER -->
+<!-- BACKGROUND -->
+<div class="bg"></div>
+<div class="overlay"></div>
 
-<div class="top-header">
-<img src="{{ asset('images/kmi-logo.png') }}">
-<h2>PERMIT TO WORK - PT.KMI</h2>
-</div>
+<!-- CENTER WRAPPER -->
+<div class="wrapper">
 
-<div class="main-container">
+<!-- LOGIN BOX -->
+<div class="login-box">
 
-<!-- LEFT IMAGE -->
-<div class="left-side"></div>
+<h3 class="title">PENGADAAN BARANG</h3>
+<div class="subtitle">PT KMI</div>
 
-<!-- LOGIN -->
-<div class="right-side">
-
-<div class="login-card">
-
-<div class="login-tabs">
-<div class="active">Login</div>
-<div onclick="window.location='/register'">Sign Up</div>
-</div>
-
-@if(session('error'))
-<div class="alert alert-danger">
-{{ session('error') }}
+@if(session('status'))
+<div class="alert alert-success py-2">
+{{ session('status') }}
 </div>
 @endif
 
-<form method="POST" action="/login">
+@if($errors->any())
+<div class="alert alert-danger py-2">
+{{ $errors->first() }}
+</div>
+@endif
+
+<form method="POST" action="{{ route('login') }}" onsubmit="startLoading()">
 @csrf
 
-<div class="form-group">
-<div class="input-icon">
+<div class="input-group">
 <i class="bi bi-person"></i>
-<input type="email" name="email" class="form-control" placeholder="username: admin or user" required>
-</div>
+<input type="email" name="email" placeholder="Email Admin" required>
 </div>
 
-<div class="form-group">
-<div class="input-icon">
+<div class="input-group">
 <i class="bi bi-lock"></i>
-<input type="password" name="password" class="form-control" placeholder="password" required>
-</div>
+<input type="password" name="password" placeholder="Password" required>
 </div>
 
 <div class="remember">
-<label><input type="checkbox"> Remember me</label>
-<a href="#" style="color:#fff;">Forgot password</a>
+<label><input type="checkbox" name="remember"> Remember me</label>
+<a href="{{ route('password.request') }}">Forgot?</a>
 </div>
 
-<button type="submit" class="login-btn">
-Sign In
+<button class="login-btn" id="btnLogin" type="submit">
+<span class="spinner" id="spinner"></span>
+<span id="btnText">Sign In</span>
 </button>
 
 </form>
@@ -358,7 +262,13 @@ Sign In
 
 </div>
 
-</div>
+<script>
+function startLoading(){
+document.getElementById("spinner").style.display="block";
+document.getElementById("btnText").innerText="Loading...";
+document.getElementById("btnLogin").disabled=true;
+}
+</script>
 
 </body>
 </html>
