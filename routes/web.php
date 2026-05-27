@@ -9,6 +9,7 @@ use App\Http\Controllers\ReTechnicalEvaluationController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ProcurementController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\ReportController;
 
 use App\Models\RequestPurchasing;
 use App\Models\TechnicalEvaluation;
@@ -268,7 +269,7 @@ Route::middleware('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| LAPORAN
+| LAPORAN (Legacy Blade)
 |--------------------------------------------------------------------------
 */
 
@@ -276,6 +277,34 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/laporan', [LaporanController::class, 'index'])
         ->name('laporan.index');
+
+});
+
+/*
+|--------------------------------------------------------------------------
+| REPORT (Inertia Vue — Import/Export)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', \App\Http\Middleware\HandleInertiaRequests::class])->prefix('report')->group(function () {
+
+    Route::get('/', [ReportController::class, 'index'])
+        ->name('report.index');
+
+    Route::post('/import', [ReportController::class, 'import'])
+        ->name('report.import');
+
+    Route::get('/template', [ReportController::class, 'downloadTemplate'])
+        ->name('report.template');
+
+    Route::get('/export/excel', [ReportController::class, 'exportExcel'])
+        ->name('report.export.excel');
+
+    Route::get('/export/pdf', [ReportController::class, 'exportPdf'])
+        ->name('report.export.pdf');
+
+    Route::get('/error-log/{importLog}', [ReportController::class, 'downloadErrorLog'])
+        ->name('report.errorlog');
 
 });
 
