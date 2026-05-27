@@ -8,9 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('request_purchasings', function (Blueprint $table) {
-            $table->string('departemen')->after('qty');
-        });
+        if (!Schema::hasColumn('request_purchasings', 'departemen')) {
+            Schema::table('request_purchasings', function (Blueprint $table) {
+                $table->string('departemen')->after('qty');
+            });
+        }
     }
 
     public function down(): void

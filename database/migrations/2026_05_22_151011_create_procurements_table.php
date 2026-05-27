@@ -1,19 +1,22 @@
-public function up(): void
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Original procurements table (DEPRECATED — superseded by restructure migration).
+ */
+return new class extends Migration
 {
-    Schema::create('procurements', function (Blueprint $table) {
-        $table->id();
+    public function up(): void
+    {
+        // This migration is intentionally left as a no-op.
+        // The table is dropped and recreated by 2026_05_27_210000_restructure_procurements_table.php
+    }
 
-        // 🔥 RELASI BARU (INI YANG BENER)
-        $table->foreignId('rp_id')
-            ->nullable()
-            ->constrained('request_purchasings')
-            ->onDelete('cascade');
-
-        $table->string('kode');
-        $table->string('barang');
-        $table->string('status');
-        $table->date('tanggal');
-
-        $table->timestamps();
-    });
-}
+    public function down(): void
+    {
+        //
+    }
+};
