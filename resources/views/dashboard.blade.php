@@ -610,27 +610,27 @@ body{
 
         <div class="sidebar-menu">
 
-            <a class="active" href="/dashboard">
+            <a class="{{ !request()->has('status') ? 'active' : '' }}" href="/dashboard">
                 <i class="bi bi-speedometer2"></i>
                 Dashboard
             </a>
 
-            <a href="/dashboard?status=RP">
+            <a class="{{ request('status') === 'RP' ? 'active' : '' }}" href="/dashboard?status=RP">
                 <i class="bi bi-file-earmark-text"></i>
                 Request Purchasing
             </a>
 
-            <a href="/dashboard?status=TE">
+            <a class="{{ request('status') === 'TE' ? 'active' : '' }}" href="/dashboard?status=TE">
                 <i class="bi bi-clipboard-check"></i>
                 Technical Evaluation
             </a>
 
-            <a href="/dashboard?status=RE-TE">
+            <a class="{{ request('status') === 'RE-TE' ? 'active' : '' }}" href="/dashboard?status=RE-TE">
                 <i class="bi bi-arrow-repeat"></i>
                 Re-Technical Evaluation
             </a>
 
-            <a href="/dashboard?status=PO">
+            <a class="{{ request('status') === 'PO' ? 'active' : '' }}" href="/dashboard?status=PO">
                 <i class="bi bi-bag-check"></i>
                 Purchase Order
             </a>
@@ -763,6 +763,8 @@ body{
 
                     <input type="text"
                            id="searchInput"
+                           name="search"
+                           value="{{ request('search') }}"
                            class="form-control search-input"
                            placeholder="Cari kode / barang / status...">
 
@@ -799,28 +801,26 @@ body{
 
             @forelse($procurements as $item)
 
-            <tr data-status="{{ is_object($item) ? $item->status : $item['status'] }}">
+            <tr data-status="{{ $item->status }}">
 
                 <td>{{ $no++ }}</td>
 
                 <td>
-                    {{ is_object($item) ? $item->kode_pengadaan : $item['kode_pengadaan'] }}
+                    {{ $item->kode_pengadaan }}
                 </td>
 
                 <td>
-                    {{ is_object($item) ? $item->nama_barang : $item['nama_barang'] }}
+                    {{ $item->nama_barang }}
                 </td>
 
                 <td>
-                    {{ is_object($item) ? $item->vendor : $item['vendor'] }}
+                    {{ $item->vendor }}
                 </td>
 
                 <td>
 
                     @php
-                        $status = is_object($item)
-                            ? $item->status
-                            : $item['status'];
+                        $status = $item->status;
                     @endphp
 
                     @if($status == 'RP')
@@ -861,22 +861,22 @@ body{
                 </td>
 
                 <td>
-                    {{ is_object($item) ? $item->tanggal : $item['tanggal'] }}
+                    {{ optional($item->tanggal)->format('Y-m-d') }}
                 </td>
 
                 <td>
 
                     <button class="btn-edit"
                             onclick="openEditModal(
-                            '{{ is_object($item) ? $item->id : $item['id'] }}',
-                            '{{ is_object($item) ? $item->kode_pengadaan : $item['kode_pengadaan'] }}',
-                            '{{ is_object($item) ? $item->nama_barang : $item['nama_barang'] }}',
-                            '{{ is_object($item) ? $item->vendor : $item['vendor'] }}'
+                            '{{ $item->id }}',
+                            '{{ $item->kode_pengadaan }}',
+                            '{{ $item->nama_barang }}',
+                            '{{ $item->vendor }}'
                             )">
                         Edit
                     </button>
 
-                    <form action="{{ route('procurement.delete', is_object($item) ? $item->id : $item['id']) }}"
+                    <form action="{{ route('procurement.delete', $item->id) }}"
                         method="POST"
                         class="deleteForm"
                         style="display:inline-block;">
@@ -893,32 +893,44 @@ body{
 
                     <!-- Phase Automation Approval Buttons -->
                     @if($status == 'RP')
-                        <form action="{{ route('procurement.approve_phase', is_object($item) ? $item->id : $item['id']) }}" method="POST" style="display:inline-block;">
+                        <form action="{{ route('procurement.approve_phase', $item->id) }}" method="POST" style="display:inline-block;">
                             @csrf
                             <button type="submit" class="btn btn-sm btn-primary" style="font-size:12px; height:28px; border-radius:6px; font-weight:600; padding:3px 10px; vertical-align:middle;">
                                 Approve to TE
                             </button>
                         </form>
                     @elseif($status == 'TE')
-                        <form action="{{ route('procurement.approve_phase', is_object($item) ? $item->id : $item['id']) }}" method="POST" style="display:inline-block;">
+                        <form action="{{ route('procurement.approve_phase', $item->id) }}" method="POST" style="display:inline-block;">
                             @csrf
                             <input type="hidden" name="target" value="RE-TE">
                             <button type="submit" class="btn btn-sm btn-warning text-white" style="font-size:12px; height:28px; border-radius:6px; font-weight:600; padding:3px 10px; vertical-align:middle;">
                                 Approve to RE-TE
                             </button>
                         </form>
-                        <form action="{{ route('procurement.approve_phase', is_object($item) ? $item->id : $item['id']) }}" method="POST" style="display:inline-block;">
+                        <form action="{{ route('procurement.approve_phase', $item->id) }}" method="POST" style="display:inline-block;">
                             @csrf
                             <input type="hidden" name="target" value="PO">
                             <button type="submit" class="btn btn-sm text-white" style="background:#ff0095; font-size:12px; height:28px; border-radius:6px; font-weight:600; padding:3px 10px; vertical-align:middle;">
                                 Approve to PO
                             </button>
                         </form>
+                        <form action="{{ route('procurement.reject_phase', $item->id) }}" method="POST" style="display:inline-block;">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-danger" style="font-size:12px; height:28px; border-radius:6px; font-weight:600; padding:3px 10px; vertical-align:middle;">
+                                Tolak
+                            </button>
+                        </form>
                     @elseif($status == 'RE-TE')
-                        <form action="{{ route('procurement.approve_phase', is_object($item) ? $item->id : $item['id']) }}" method="POST" style="display:inline-block;">
+                        <form action="{{ route('procurement.approve_phase', $item->id) }}" method="POST" style="display:inline-block;">
                             @csrf
                             <button type="submit" class="btn btn-sm text-white" style="background:#ff0095; font-size:12px; height:28px; border-radius:6px; font-weight:600; padding:3px 10px; vertical-align:middle;">
                                 Approve to PO
+                            </button>
+                        </form>
+                        <form action="{{ route('procurement.reject_phase', $item->id) }}" method="POST" style="display:inline-block;">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-danger" style="font-size:12px; height:28px; border-radius:6px; font-weight:600; padding:3px 10px; vertical-align:middle;">
+                                Tolak
                             </button>
                         </form>
                     @endif
@@ -930,7 +942,7 @@ body{
             @empty
 
             <tr>
-                <td colspan="6">
+                <td colspan="7">
                     Data kosong
                 </td>
             </tr>
