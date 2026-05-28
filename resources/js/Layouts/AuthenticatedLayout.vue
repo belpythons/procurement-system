@@ -1,6 +1,13 @@
 <script setup>
 import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
+
+defineProps({
+    title: {
+        type: String,
+        default: 'LAPORAN (REPORT)'
+    }
+});
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -11,12 +18,39 @@ const navItems = computed(() => [
     { href: '/dashboard?status=TE', label: 'Technical Evaluation', icon: 'bi bi-clipboard-check', active: page.url === '/dashboard?status=TE' },
     { href: '/dashboard?status=RE-TE', label: 'Re-Technical Evaluation', icon: 'bi bi-arrow-repeat', active: page.url === '/dashboard?status=RE-TE' },
     { href: '/dashboard?status=PO', label: 'Purchase Order', icon: 'bi bi-bag-check', active: page.url === '/dashboard?status=PO' },
-    { href: '/report', label: 'Laporan', icon: 'bi bi-bar-chart-fill', active: page.url.startsWith('/report') },
+    { href: '/report', label: 'Laporan', icon: 'bi bi-bar-chart-fill', active: page.url.startsWith('/report') || page.url.startsWith('/laporan') },
 ]);
 
 const csrfToken = computed(() => {
     return document.querySelector('meta[name="csrf-token"]')?.content || '';
 });
+
+// Toast / Flash Logic (Clean UI Style)
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastType = ref('success'); // 'success' or 'error'
+
+watch(
+    () => page.props.flash,
+    (flash) => {
+        if (flash?.success) {
+            toastMessage.value = flash.success;
+            toastType.value = 'success';
+            showToast.value = true;
+            setTimeout(() => {
+                showToast.value = false;
+            }, 4000);
+        } else if (flash?.error) {
+            toastMessage.value = flash.error;
+            toastType.value = 'error';
+            showToast.value = true;
+            setTimeout(() => {
+                showToast.value = false;
+            }, 4000);
+        }
+    },
+    { deep: true, immediate: true }
+);
 </script>
 
 <template>
@@ -76,7 +110,7 @@ const csrfToken = computed(() => {
 
             <!-- Page Title -->
             <div class="welcome-text mt-[5px] ml-[6px] mb-[8px] text-[30px] text-black font-extrabold">
-                LAPORAN (REPORT)
+                {{ title }}
             </div>
 
             <!-- Slot content -->
@@ -84,6 +118,49 @@ const csrfToken = computed(() => {
                 <slot />
             </main>
         </div>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- GLOBAL CLEAN & MODERN TOAST NOTIFICATION  -->
+        <!-- ═══════════════════════════════════════════ -->
+        <Transition name="toast-slide">
+            <div 
+                v-if="showToast" 
+                class="fixed bottom-6 right-6 z-[99999] w-[360px] bg-white border-l-4 p-4 rounded-r-xl rounded-l-md shadow-[0_10px_30px_rgba(0,0,0,0.12)] flex items-start gap-3 transition-all duration-300"
+                :class="toastType === 'success' ? 'border-green-500 bg-green-50/30' : 'border-red-500 bg-red-50/30'"
+            >
+                <!-- Icon success / error -->
+                <div class="flex-shrink-0 mt-0.5">
+                    <div 
+                        class="w-8 h-8 rounded-full flex items-center justify-center"
+                        :class="toastType === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'"
+                    >
+                        <i v-if="toastType === 'success'" class="bi bi-check-lg text-lg"></i>
+                        <i v-else class="bi bi-x-lg text-base"></i>
+                    </div>
+                </div>
+
+                <!-- Text content -->
+                <div class="flex-grow">
+                    <h4 
+                        class="text-sm font-bold tracking-tight"
+                        :class="toastType === 'success' ? 'text-green-950' : 'text-red-950'"
+                    >
+                        {{ toastType === 'success' ? 'Berhasil!' : 'Gagal!' }}
+                    </h4>
+                    <p class="text-xs text-gray-500 font-medium mt-0.5 leading-relaxed">
+                        {{ toastMessage }}
+                    </p>
+                </div>
+
+                <!-- Close button -->
+                <button 
+                    @click="showToast = false" 
+                    class="flex-shrink-0 text-gray-400 hover:text-gray-600 p-0.5 rounded-full hover:bg-gray-100 transition duration-150"
+                >
+                    <i class="bi bi-x text-lg leading-none"></i>
+                </button>
+            </div>
+        </Transition>
     </div>
 </template>
 
@@ -201,5 +278,19 @@ const csrfToken = computed(() => {
         margin-left: 0 !important;
         padding: 15px !important;
     }
+}
+
+/* TOAST TRANSITION */
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.toast-slide-enter-from {
+    transform: translateY(15px) scale(0.95);
+    opacity: 0;
+}
+.toast-slide-leave-to {
+    transform: scale(0.95);
+    opacity: 0;
 }
 </style>

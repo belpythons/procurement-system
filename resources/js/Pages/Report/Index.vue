@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onUnmounted, getCurrentInstance } from 'vue';
 import { useForm, usePage, router } from '@inertiajs/vue3';
-import ReportLayout from '@/Layouts/ReportLayout.vue';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 const props = defineProps({
     procurements: { type: Array, default: () => [] },
@@ -102,7 +102,7 @@ function getStatus(status) { return statusConfig[status] || { cls: 'bg-gray-500 
 </script>
 
 <template>
-<ReportLayout>
+<AuthenticatedLayout>
 <div class="space-y-6">
 
     <!-- STATS CARDS — Matches dashboard.blade.php layout -->
@@ -302,5 +302,5 @@ function getStatus(status) { return statusConfig[status] || { cls: 'bg-gray-500 
     </section>
 
 </div>
-</ReportLayout>
+</AuthenticatedLayout>
 </template>
