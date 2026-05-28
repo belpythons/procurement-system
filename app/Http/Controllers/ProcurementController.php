@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Procurement;
+use Inertia\Inertia;
 
 class ProcurementController extends Controller
 {
@@ -42,13 +43,14 @@ class ProcurementController extends Controller
         $totalRETE = Procurement::where('status', Procurement::STATUS_RETE)->count();
         $totalPO = Procurement::where('status', Procurement::STATUS_PO)->count();
 
-        return view('dashboard', compact(
-            'procurements',
-            'totalRP',
-            'totalTE',
-            'totalRETE',
-            'totalPO'
-        ));
+        return Inertia::render('Dashboard/Index', [
+            'procurements' => $procurements,
+            'totalRP'      => $totalRP,
+            'totalTE'      => $totalTE,
+            'totalRETE'    => $totalRETE,
+            'totalPO'      => $totalPO,
+            'filters'      => $request->only(['search', 'status']),
+        ]);
     }
 
     /*
@@ -58,7 +60,7 @@ class ProcurementController extends Controller
     */
     public function create()
     {
-        return view('procurement.create');
+        return Inertia::render('Dashboard/Create');
     }
 
     /*
@@ -68,30 +70,69 @@ class ProcurementController extends Controller
     */
     public function store(Request $request)
     {
-        $request->validate([
+        $rules = [
             'kode_pengadaan' => 'required|unique:procurements,kode_pengadaan',
-            'nama_barang'    => 'required',
-            'vendor'         => 'required',
-            'tanggal_in'     => 'nullable|date',
-            'tanggal_out'    => 'nullable|date',
-            'tanggal_te'     => 'nullable|date',
-            'tanggal_rete'   => 'nullable|date',
-            'tanggal_po'     => 'nullable|date',
-        ]);
+            'status'         => 'required|in:RP,TE,RE-TE,PO',
+            'nama_barang'    => 'nullable|string|max:255',
+            'vendor'         => 'nullable|string|max:255',
+            'quantity'       => 'nullable|string|max:100',
+            'departemen'     => 'nullable|string|max:255',
+            'keterangan'     => 'nullable|string',
+            'hasil_evaluasi' => 'nullable|string',
+            'catatan'        => 'nullable|string',
+            'tanggal'        => 'nullable|date',
+        ];
 
-        Procurement::create([
-            'kode_pengadaan' => $request->kode_pengadaan,
-            'nama_barang'    => $request->nama_barang,
-            'vendor'         => $request->vendor,
-            'tanggal_in'     => $request->tanggal_in,
-            'tanggal_out'    => $request->tanggal_out,
-            'tanggal_te'     => $request->tanggal_te,
-            'tanggal_rete'   => $request->tanggal_rete,
-            'tanggal_po'     => $request->tanggal_po,
-        ]);
+        // Specific conditional validations per phase
+        if ($request->status === 'RP') {
+            $rules['nama_barang'] = 'required|string|max:255';
+            $rules['quantity']    = 'required|string|max:100';
+            $rules['departemen']  = 'required|string|max:255';
+        } elseif ($request->status === 'TE') {
+            $rules['vendor']         = 'required|string|max:255';
+            $rules['hasil_evaluasi'] = 'required|string';
+        } elseif ($request->status === 'RE-TE') {
+            $rules['nama_barang'] = 'required|string|max:255';
+            $rules['vendor']      = 'required|string|max:255';
+            $rules['catatan']     = 'required|string';
+        } elseif ($request->status === 'PO') {
+            $rules['nama_barang'] = 'required|string|max:255';
+            $rules['vendor']      = 'required|string|max:255';
+            $rules['quantity']    = 'required|string|max:100';
+            $rules['departemen']  = 'required|string|max:255';
+        }
 
-        return redirect('/dashboard')
-            ->with('success', 'Data berhasil ditambahkan');
+        $request->validate($rules);
+
+        $procurement = new Procurement();
+        $procurement->kode_pengadaan = $request->kode_pengadaan;
+        $procurement->nama_barang    = $request->nama_barang ?? 'Barang';
+        $procurement->vendor         = $request->vendor ?? 'Vendor Default';
+        $procurement->quantity       = $request->quantity;
+        $procurement->departemen     = $request->departemen;
+        $procurement->keterangan     = $request->keterangan;
+        $procurement->hasil_evaluasi = $request->hasil_evaluasi;
+        $procurement->catatan        = $request->catatan;
+        $procurement->status         = $request->status;
+
+        $procurement->syncDatesWithStatus($request->status);
+        if ($request->filled('tanggal')) {
+            $date = $request->tanggal;
+            if ($request->status === Procurement::STATUS_RP) {
+                $procurement->tanggal_in = $date;
+            } elseif ($request->status === Procurement::STATUS_TE) {
+                $procurement->tanggal_te = $date;
+            } elseif ($request->status === Procurement::STATUS_RETE) {
+                $procurement->tanggal_rete = $date;
+            } elseif ($request->status === Procurement::STATUS_PO) {
+                $procurement->tanggal_po = $date;
+            }
+        }
+
+        $procurement->save();
+
+        return redirect()->to('/dashboard')
+            ->with('success', 'Data procurement berhasil ditambahkan!');
     }
 
     /*
@@ -101,22 +142,91 @@ class ProcurementController extends Controller
     */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'kode_pengadaan' => 'required|unique:procurements,kode_pengadaan,' . $id,
-            'nama_barang'    => 'required',
-            'vendor'         => 'required',
-        ]);
-
         $procurement = Procurement::findOrFail($id);
 
-        $procurement->update([
-            'kode_pengadaan' => $request->kode_pengadaan,
-            'nama_barang'    => $request->nama_barang,
-            'vendor'         => $request->vendor,
-        ]);
+        $rules = [
+            'kode_pengadaan' => 'required|unique:procurements,kode_pengadaan,' . $id,
+            'status'         => 'required|in:RP,TE,RE-TE,PO',
+            'nama_barang'    => 'nullable|string|max:255',
+            'vendor'         => 'nullable|string|max:255',
+            'quantity'       => 'nullable|string|max:100',
+            'departemen'     => 'nullable|string|max:255',
+            'keterangan'     => 'nullable|string',
+            'hasil_evaluasi' => 'nullable|string',
+            'catatan'        => 'nullable|string',
+            'tanggal'        => 'nullable|date',
+        ];
 
-        return redirect('/dashboard')
-            ->with('success', 'Data berhasil diupdate');
+        // Specific conditional validations per phase
+        if ($request->status === 'RP') {
+            $rules['nama_barang'] = 'required|string|max:255';
+            $rules['quantity']    = 'required|string|max:100';
+            $rules['departemen']  = 'required|string|max:255';
+        } elseif ($request->status === 'TE') {
+            $rules['vendor']         = 'required|string|max:255';
+            $rules['hasil_evaluasi'] = 'required|string';
+        } elseif ($request->status === 'RE-TE') {
+            $rules['nama_barang'] = 'required|string|max:255';
+            $rules['vendor']      = 'required|string|max:255';
+            $rules['catatan']     = 'required|string';
+        } elseif ($request->status === 'PO') {
+            $rules['nama_barang'] = 'required|string|max:255';
+            $rules['vendor']      = 'required|string|max:255';
+            $rules['quantity']    = 'required|string|max:100';
+            $rules['departemen']  = 'required|string|max:255';
+        }
+
+        $request->validate($rules);
+
+        if ($request->has('kode_pengadaan')) {
+            $procurement->kode_pengadaan = $request->kode_pengadaan;
+        }
+        if ($request->has('nama_barang')) {
+            $procurement->nama_barang = $request->nama_barang;
+        }
+        if ($request->has('vendor')) {
+            $procurement->vendor = $request->vendor;
+        }
+        if ($request->has('quantity')) {
+            $procurement->quantity = $request->quantity;
+        }
+        if ($request->has('departemen')) {
+            $procurement->departemen = $request->departemen;
+        }
+        if ($request->has('keterangan')) {
+            $procurement->keterangan = $request->keterangan;
+        }
+        if ($request->has('hasil_evaluasi')) {
+            $procurement->hasil_evaluasi = $request->hasil_evaluasi;
+        }
+        if ($request->has('catatan')) {
+            $procurement->catatan = $request->catatan;
+        }
+
+        $statusChanged = $procurement->status !== $request->status;
+        $procurement->status = $request->status;
+
+        if ($statusChanged) {
+            $procurement->syncDatesWithStatus($request->status);
+        }
+
+        if ($request->filled('tanggal')) {
+            $date = $request->tanggal;
+            if ($request->status === Procurement::STATUS_RP) {
+                $procurement->tanggal_in = $date;
+            } elseif ($request->status === Procurement::STATUS_TE) {
+                $procurement->tanggal_te = $date;
+            } elseif ($request->status === Procurement::STATUS_RETE) {
+                $procurement->tanggal_rete = $date;
+            } elseif ($request->status === Procurement::STATUS_PO) {
+                $procurement->tanggal_po = $date;
+            }
+        }
+
+        $procurement->save();
+
+        return redirect()->to('/dashboard')
+            ->with('success', 'Data procurement berhasil diperbarui!');
     }
 
     /*
@@ -129,8 +239,8 @@ class ProcurementController extends Controller
         $procurement = Procurement::findOrFail($id);
         $procurement->delete();
 
-        return redirect('/dashboard')
-            ->with('success', 'Data berhasil dihapus');
+        return redirect()->to('/dashboard')
+            ->with('success', 'Data procurement berhasil dihapus!');
     }
 
     /*
@@ -161,8 +271,8 @@ class ProcurementController extends Controller
 
         $procurement->save();
 
-        return redirect()->route('dashboard', ['status' => $procurement->status])
-            ->with('success', 'Berhasil di-approve!');
+        return redirect()->to('/dashboard')
+            ->with('success', 'Fase berhasil disetujui (Approved)!');
     }
 
     /*
@@ -177,6 +287,7 @@ class ProcurementController extends Controller
 
         if ($currentStatus === Procurement::STATUS_TE) {
             $procurement->tanggal_te = null;
+            $procurement->tanggal_out = null; // Reset tanggal_out when rejected to RP
         } elseif ($currentStatus === Procurement::STATUS_RETE) {
             $procurement->tanggal_rete = null;
         } elseif ($currentStatus === Procurement::STATUS_PO) {
@@ -185,7 +296,7 @@ class ProcurementController extends Controller
 
         $procurement->save();
 
-        return redirect()->route('dashboard', ['status' => $procurement->status])
-            ->with('success', 'Data dikembalikan!');
+        return redirect()->to('/dashboard')
+            ->with('success', 'Fase berhasil ditolak (Rejected)!');
     }
 }

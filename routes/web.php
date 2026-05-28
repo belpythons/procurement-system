@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProcurementController;
-use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ReportController;
 
 use App\Models\Procurement;
@@ -21,19 +20,14 @@ Route::get('/', function () {
 
 /*
 |--------------------------------------------------------------------------
-| DASHBOARD
+| DASHBOARD & PROCUREMENT CRUD (FULL VILT)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->get('/dashboard', [ProcurementController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', \App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
 
-/*
-|--------------------------------------------------------------------------
-| PROCUREMENT CRUD (FULL BARU)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [ProcurementController::class, 'index'])
+        ->name('dashboard');
 
     Route::get('/procurement/create', [ProcurementController::class, 'create'])
         ->name('procurement.create');
@@ -44,7 +38,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/procurement/edit/{id}', [ProcurementController::class, 'edit'])
         ->name('procurement.edit');
 
-    // --- PASTIKAN PROSES UPDATE & DELETE MENGARAH KE CONTROLLER YANG BENAR ---
     Route::put('/procurement/update/{id}', [ProcurementController::class, 'update'])
         ->name('procurement.update');
 
@@ -80,13 +73,13 @@ Route::middleware('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| LAPORAN (Legacy Blade)
+| LAPORAN (Inertia Vue Redirect)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
 
-    Route::get('/laporan', [LaporanController::class, 'index'])
+    Route::get('/laporan', [ReportController::class, 'index'])
         ->name('laporan.index');
 
 });
