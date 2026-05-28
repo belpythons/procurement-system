@@ -160,22 +160,22 @@ body{
                 Dashboard
             </a>
 
-            <a href="{{ route('rp.index') }}">
+            <a href="/dashboard?status=RP">
                 <i class="bi bi-file-earmark-text"></i>
                 Request Purchasing
             </a>
 
-            <a href="{{ route('te.index') }}">
+            <a href="/dashboard?status=TE">
                 <i class="bi bi-clipboard-check"></i>
                 Technical Evaluation
             </a>
 
-            <a href="{{ route('rete.index') }}">
+            <a href="/dashboard?status=RE-TE">
                 <i class="bi bi-arrow-repeat"></i>
                 Re-Technical Evaluation
             </a>
 
-            <a href="{{ route('po.index') }}">
+            <a href="/dashboard?status=PO">
                 <i class="bi bi-bag-check"></i>
                 Purchase Order
             </a>
@@ -227,19 +227,15 @@ body{
 
             <div class="d-flex gap-2">
 
-                <button class="btn btn-success">
-
+                <a href="{{ route('report.export.excel') }}" class="btn btn-success">
                     <i class="bi bi-file-earmark-excel"></i>
                     Export Excel
+                </a>
 
-                </button>
-
-                <button class="btn btn-danger">
-
+                <a href="{{ route('report.export.pdf') }}" class="btn btn-danger">
                     <i class="bi bi-file-earmark-pdf"></i>
                     Export PDF
-
-                </button>
+                </a>
 
             </div>
 
@@ -252,8 +248,9 @@ body{
                 <tr>
 
                     <th>No</th>
-                    <th>Kode</th>
+                    <th>Kode Pengadaan</th>
                     <th>Nama Barang</th>
+                    <th>Vendor</th>
                     <th>Status</th>
                     <th>Tanggal</th>
 
@@ -269,34 +266,36 @@ body{
 
                 <td>{{ $loop->iteration }}</td>
 
-                <td>{{ $item->kode }}</td>
+                <td>{{ $item->kode_pengadaan }}</td>
 
-                <td>{{ $item->barang }}</td>
+                <td>{{ $item->nama_barang }}</td>
+
+                <td>{{ $item->vendor }}</td>
 
                 <td>
 
-                    @if($item->status == 'Request Purchasing')
+                    @if($item->status == 'RP')
 
                         <span class="badge bg-primary">
-                            {{ $item->status }}
+                            RP
                         </span>
 
-                    @elseif($item->status == 'Technical Evaluation')
+                    @elseif($item->status == 'TE')
 
                         <span class="badge bg-success">
-                            {{ $item->status }}
+                            TE
                         </span>
 
-                    @elseif($item->status == 'Re-Technical Evaluation')
+                    @elseif($item->status == 'RE-TE')
 
                         <span class="badge bg-warning text-dark">
-                            {{ $item->status }}
+                            RE-TE
                         </span>
 
-                    @elseif($item->status == 'Purchase Order')
+                    @elseif($item->status == 'PO')
 
                         <span class="badge bg-danger">
-                            {{ $item->status }}
+                            PO
                         </span>
 
                     @else
@@ -309,7 +308,7 @@ body{
 
                 </td>
 
-                <td>{{ $item->tanggal }}</td>
+                <td>{{ $item->tanggal?->format('Y-m-d') ?? '-' }}</td>
 
             </tr>
 

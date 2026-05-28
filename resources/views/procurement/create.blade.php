@@ -105,79 +105,47 @@ body{
 
             @csrf
 
-            <!-- KODE -->
+            <!-- KODE PENGADAAN -->
             <div class="mb-3">
 
                 <label class="form-label">
-                    Kode
+                    Kode Pengadaan
                 </label>
 
                 <input type="text"
-                    name="kode"
+                    name="kode_pengadaan"
                     class="form-control"
-                    placeholder="Masukkan kode"
+                    placeholder="Masukkan kode pengadaan"
                     required>
 
             </div>
 
-            <!-- BARANG -->
+            <!-- NAMA BARANG -->
             <div class="mb-3">
 
                 <label class="form-label">
-                    Barang
+                    Nama Barang
                 </label>
 
                 <input type="text"
-                    name="barang"
+                    name="nama_barang"
                     class="form-control"
                     placeholder="Masukkan nama barang"
                     required>
 
             </div>
 
-            <!-- STATUS -->
+            <!-- VENDOR -->
             <div class="mb-3">
 
                 <label class="form-label">
-                    Status
+                    Vendor
                 </label>
 
-                <select name="status" class="form-select" required>
-
-                    <option value="">
-                        -- Pilih Status --
-                    </option>
-
-                    <option value="Request Purchasing">
-                        Request Purchasing
-                    </option>
-
-                    <option value="Technical Evaluation">
-                        Technical Evaluation
-                    </option>
-
-                    <option value="Re-Technical Evaluation">
-                        Re-Technical Evaluation
-                    </option>
-
-                    <option value="Purchase Order">
-                        Purchase Order
-                    </option>
-
-                </select>
-
-            </div>
-
-            <!-- TANGGAL -->
-            <div class="mb-4">
-
-                <label class="form-label">
-                    Tanggal
-                </label>
-
-                <input type="date"
-                    name="tanggal"
+                <input type="text"
+                    name="vendor"
                     class="form-control"
+                    placeholder="Masukkan nama vendor"
                     required>
 
             </div>

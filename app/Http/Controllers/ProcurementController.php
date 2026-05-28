@@ -18,43 +18,24 @@ class ProcurementController extends Controller
 
         // SEARCH
         if ($request->filled('search')) {
-
             $search = $request->search;
-
             $query->where(function ($q) use ($search) {
-
-                $q->where('kode', 'like', "%{$search}%")
-                  ->orWhere('barang', 'like', "%{$search}%")
+                $q->where('kode_pengadaan', 'like', "%{$search}%")
+                  ->orWhere('nama_barang', 'like', "%{$search}%")
+                  ->orWhere('vendor', 'like', "%{$search}%")
                   ->orWhere('status', 'like', "%{$search}%");
-
             });
-
         }
 
         $procurements = $query
             ->orderBy('id', 'desc')
             ->get();
 
-        // TOTAL CARD
-        $totalRP = Procurement::where(
-            'status',
-            'Request Purchasing'
-        )->count();
-
-        $totalTE = Procurement::where(
-            'status',
-            'Technical Evaluation'
-        )->count();
-
-        $totalRETE = Procurement::where(
-            'status',
-            'Re-Technical Evaluation'
-        )->count();
-
-        $totalPO = Procurement::where(
-            'status',
-            'Purchase Order'
-        )->count();
+        // TOTAL CARD (using class constants)
+        $totalRP = Procurement::where('status', Procurement::STATUS_RP)->count();
+        $totalTE = Procurement::where('status', Procurement::STATUS_TE)->count();
+        $totalRETE = Procurement::where('status', Procurement::STATUS_RETE)->count();
+        $totalPO = Procurement::where('status', Procurement::STATUS_PO)->count();
 
         return view('dashboard', compact(
             'procurements',
@@ -67,27 +48,32 @@ class ProcurementController extends Controller
 
     /*
     |--------------------------------------------------------------------------
+    | CREATE FORM
+    |--------------------------------------------------------------------------
+    */
+    public function create()
+    {
+        return view('procurement.create');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | STORE
     |--------------------------------------------------------------------------
     */
     public function store(Request $request)
     {
         $request->validate([
-
-            'kode' => 'required',
-            'barang' => 'required',
-            'status' => 'required',
-            'tanggal' => 'required',
-
+            'kode_pengadaan' => 'required|unique:procurements,kode_pengadaan',
+            'nama_barang'    => 'required',
+            'vendor'         => 'required',
         ]);
 
         Procurement::create([
-
-            'kode' => $request->kode,
-            'barang' => $request->barang,
-            'status' => $request->status,
-            'tanggal' => $request->tanggal,
-
+            'kode_pengadaan' => $request->kode_pengadaan,
+            'nama_barang'    => $request->nama_barang,
+            'vendor'         => $request->vendor,
+            'tanggal_in'     => now(),
         ]);
 
         return redirect('/dashboard')
@@ -102,23 +88,17 @@ class ProcurementController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-
-            'kode' => 'required',
-            'barang' => 'required',
-            'status' => 'required',
-            'tanggal' => 'required',
-
+            'kode_pengadaan' => 'required|unique:procurements,kode_pengadaan,' . $id,
+            'nama_barang'    => 'required',
+            'vendor'         => 'required',
         ]);
 
         $procurement = Procurement::findOrFail($id);
 
         $procurement->update([
-
-            'kode' => $request->kode,
-            'barang' => $request->barang,
-            'status' => $request->status,
-            'tanggal' => $request->tanggal,
-
+            'kode_pengadaan' => $request->kode_pengadaan,
+            'nama_barang'    => $request->nama_barang,
+            'vendor'         => $request->vendor,
         ]);
 
         return redirect('/dashboard')
@@ -133,10 +113,41 @@ class ProcurementController extends Controller
     public function destroy($id)
     {
         $procurement = Procurement::findOrFail($id);
-
         $procurement->delete();
 
         return redirect('/dashboard')
             ->with('success', 'Data berhasil dihapus');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | APPROVE PHASE (AUTOMATION)
+    |--------------------------------------------------------------------------
+    */
+    public function approvePhase(Request $request, $id)
+    {
+        $procurement = Procurement::findOrFail($id);
+        $currentStatus = $procurement->status;
+
+        // Auto set tanggal_out
+        $procurement->tanggal_out = now();
+
+        if ($currentStatus === Procurement::STATUS_RP) {
+            $procurement->tanggal_te = now();
+        } elseif ($currentStatus === Procurement::STATUS_TE) {
+            $target = $request->input('target', 'RE-TE');
+            if ($target === 'RE-TE') {
+                $procurement->tanggal_rete = now();
+            } else {
+                $procurement->tanggal_po = now();
+            }
+        } elseif ($currentStatus === Procurement::STATUS_RETE) {
+            $procurement->tanggal_po = now();
+        }
+
+        $procurement->save();
+
+        return redirect('/dashboard')
+            ->with('success', 'Fase berhasil di-approve');
     }
 }

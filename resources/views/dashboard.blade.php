@@ -615,22 +615,22 @@ body{
                 Dashboard
             </a>
 
-            <a href="{{ route('rp.index') }}">
+            <a href="/dashboard?status=RP">
                 <i class="bi bi-file-earmark-text"></i>
                 Request Purchasing
             </a>
 
-            <a href="{{ route('te.index') }}">
+            <a href="/dashboard?status=TE">
                 <i class="bi bi-clipboard-check"></i>
                 Technical Evaluation
             </a>
 
-            <a href="{{ route('rete.index') }}">
+            <a href="/dashboard?status=RE-TE">
                 <i class="bi bi-arrow-repeat"></i>
                 Re-Technical Evaluation
             </a>
 
-            <a href="{{ route('po.index') }}">
+            <a href="/dashboard?status=PO">
                 <i class="bi bi-bag-check"></i>
                 Purchase Order
             </a>
@@ -697,7 +697,7 @@ body{
         </div>
 
         <div class="card-stat blue"
-             onclick="filterStatusExact('Request Purchasing')">
+             onclick="filterStatusExact('RP')">
 
             <i class="bi bi-file-earmark-text"></i>
 
@@ -709,7 +709,7 @@ body{
         </div>
 
         <div class="card-stat green"
-             onclick="filterStatusExact('Technical Evaluation')">
+             onclick="filterStatusExact('TE')">
 
             <i class="bi bi-clipboard-check"></i>
 
@@ -721,7 +721,7 @@ body{
         </div>
 
         <div class="card-stat orange"
-             onclick="filterStatusExact('Re-Technical Evaluation')">
+             onclick="filterStatusExact('RE-TE')">
 
             <i class="bi bi-arrow-repeat"></i>
 
@@ -733,7 +733,7 @@ body{
         </div>
 
         <div class="card-stat purple"
-             onclick="filterStatusExact('Purchase Order')">
+             onclick="filterStatusExact('PO')">
 
             <i class="bi bi-bag-check"></i>
 
@@ -783,8 +783,9 @@ body{
 
                 <tr>
                     <th>No</th>
-                    <th>Kode</th>
-                    <th>Barang</th>
+                    <th>Kode Pengadaan</th>
+                    <th>Nama Barang</th>
+                    <th>Vendor</th>
                     <th>Status</th>
                     <th>Tanggal</th>
                     <th>Aksi</th>
@@ -803,11 +804,15 @@ body{
                 <td>{{ $no++ }}</td>
 
                 <td>
-                    {{ is_object($item) ? $item->kode : $item['kode'] }}
+                    {{ is_object($item) ? $item->kode_pengadaan : $item['kode_pengadaan'] }}
                 </td>
 
                 <td>
-                    {{ is_object($item) ? $item->barang : $item['barang'] }}
+                    {{ is_object($item) ? $item->nama_barang : $item['nama_barang'] }}
+                </td>
+
+                <td>
+                    {{ is_object($item) ? $item->vendor : $item['vendor'] }}
                 </td>
 
                 <td>
@@ -818,30 +823,30 @@ body{
                             : $item['status'];
                     @endphp
 
-                    @if($status == 'Request Purchasing')
+                    @if($status == 'RP')
 
                         <span class="badge bg-primary">
-                            {{ $status }}
+                            RP
                         </span>
 
-                    @elseif($status == 'Technical Evaluation')
+                    @elseif($status == 'TE')
 
                         <span class="badge bg-success">
-                            {{ $status }}
+                            TE
                         </span>
 
-                    @elseif($status == 'Re-Technical Evaluation')
+                    @elseif($status == 'RE-TE')
 
                         <span class="badge bg-warning text-white">
-                            {{ $status }}
+                            RE-TE
                         </span>
 
-                    @elseif($status == 'Purchase Order')
+                    @elseif($status == 'PO')
 
                         <span class="badge"
                               style="background:#ff0095;color:white;">
 
-                            {{ $status }}
+                            PO
 
                         </span>
 
@@ -862,15 +867,13 @@ body{
                 <td>
 
                     <button class="btn-edit"
-                            Onclick="openEditModal(
+                            onclick="openEditModal(
                             '{{ is_object($item) ? $item->id : $item['id'] }}',
-                            '{{ is_object($item) ? $item->kode : $item['kode'] }}',
-                            '{{ is_object($item) ? $item->barang : $item['barang'] }}',
-                            '{{ is_object($item) ? $item->status : $item['status'] }}',
-                            '{{ is_object($item) ? $item->tanggal : $item['tanggal'] }}'
+                            '{{ is_object($item) ? $item->kode_pengadaan : $item['kode_pengadaan'] }}',
+                            '{{ is_object($item) ? $item->nama_barang : $item['nama_barang'] }}',
+                            '{{ is_object($item) ? $item->vendor : $item['vendor'] }}'
                             )">
                         Edit
-                    
                     </button>
 
                     <form action="{{ route('procurement.delete', is_object($item) ? $item->id : $item['id']) }}"
@@ -880,16 +883,45 @@ body{
 
                         @csrf
 
-                    <button type="button"
-                            class="btn-delete"
-                            onclick="openDeleteModal(this)">
-                            
-                        Hapus
-                    </button>
-                    
+                        <button type="button"
+                                class="btn-delete"
+                                onclick="openDeleteModal(this)">
+                            Hapus
+                        </button>
 
-                
-                </form>
+                    </form>
+
+                    <!-- Phase Automation Approval Buttons -->
+                    @if($status == 'RP')
+                        <form action="{{ route('procurement.approve_phase', is_object($item) ? $item->id : $item['id']) }}" method="POST" style="display:inline-block;">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-primary" style="font-size:12px; height:28px; border-radius:6px; font-weight:600; padding:3px 10px; vertical-align:middle;">
+                                Approve to TE
+                            </button>
+                        </form>
+                    @elseif($status == 'TE')
+                        <form action="{{ route('procurement.approve_phase', is_object($item) ? $item->id : $item['id']) }}" method="POST" style="display:inline-block;">
+                            @csrf
+                            <input type="hidden" name="target" value="RE-TE">
+                            <button type="submit" class="btn btn-sm btn-warning text-white" style="font-size:12px; height:28px; border-radius:6px; font-weight:600; padding:3px 10px; vertical-align:middle;">
+                                Approve to RE-TE
+                            </button>
+                        </form>
+                        <form action="{{ route('procurement.approve_phase', is_object($item) ? $item->id : $item['id']) }}" method="POST" style="display:inline-block;">
+                            @csrf
+                            <input type="hidden" name="target" value="PO">
+                            <button type="submit" class="btn btn-sm text-white" style="background:#ff0095; font-size:12px; height:28px; border-radius:6px; font-weight:600; padding:3px 10px; vertical-align:middle;">
+                                Approve to PO
+                            </button>
+                        </form>
+                    @elseif($status == 'RE-TE')
+                        <form action="{{ route('procurement.approve_phase', is_object($item) ? $item->id : $item['id']) }}" method="POST" style="display:inline-block;">
+                            @csrf
+                            <button type="submit" class="btn btn-sm text-white" style="background:#ff0095; font-size:12px; height:28px; border-radius:6px; font-weight:600; padding:3px 10px; vertical-align:middle;">
+                                Approve to PO
+                            </button>
+                        </form>
+                    @endif
 
                 </td>
 
@@ -932,52 +964,27 @@ body{
         @csrf
         @method('PUT')
 
-        <label>Kode</label>
+        <label>Kode Pengadaan</label>
 
         <input type="text"
-               name="kode"
+               name="kode_pengadaan"
                id="editKode"
                class="form-control"
                required>
 
-        <label>Barang</label>
+        <label>Nama Barang</label>
 
         <input type="text"
-               name="barang"
+               name="nama_barang"
                id="editBarang"
                class="form-control"
                required>
 
-        <label>Status</label>
+        <label>Vendor</label>
 
-        <select name="status"
-                id="editStatus"
-                class="form-select"
-                required>
-
-            <option value="Request Purchasing">
-                Request Purchasing
-            </option>
-
-            <option value="Technical Evaluation">
-                Technical Evaluation
-            </option>
-
-            <option value="Re-Technical Evaluation">
-                Re-Technical Evaluation
-            </option>
-
-            <option value="Purchase Order">
-                Purchase Order
-            </option>
-
-        </select>
-
-        <label>Tanggal</label>
-
-        <input type="date"
-               name="tanggal"
-               id="editTanggal"
+        <input type="text"
+               name="vendor"
+               id="editVendor"
                class="form-control"
                required>
 
@@ -1157,7 +1164,7 @@ setTimeout(() => {
 
 /* EDIT MODAL */
 
-function openEditModal(id, kode, barang, status, tanggal){
+function openEditModal(id, kode, barang, vendor){
 
     document.getElementById('editModal').style.display = 'block';
 
@@ -1167,9 +1174,7 @@ function openEditModal(id, kode, barang, status, tanggal){
 
     document.getElementById('editBarang').value = barang;
 
-    document.getElementById('editStatus').value = status;
-
-    document.getElementById('editTanggal').value = tanggal;
+    document.getElementById('editVendor').value = vendor;
 
     document.getElementById('editForm').action =
         '/procurement/update/' + id;

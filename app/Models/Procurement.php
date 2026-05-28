@@ -21,6 +21,8 @@ class Procurement extends Model
         'tanggal_te',
         'tanggal_rete',
         'tanggal_po',
+        'tanggal_in',
+        'tanggal_out',
         'status',
     ];
 
@@ -31,6 +33,8 @@ class Procurement extends Model
         'tanggal_te'   => 'date',
         'tanggal_rete' => 'date',
         'tanggal_po'   => 'date',
+        'tanggal_in'   => 'date',
+        'tanggal_out'  => 'date',
     ];
 
     /**
@@ -67,6 +71,18 @@ class Procurement extends Model
         }
 
         return 'RP';
+    }
+
+    /**
+     * Get the active/latest phase date.
+     */
+    public function getTanggalAttribute()
+    {
+        return $this->tanggal_po 
+            ?? $this->tanggal_rete 
+            ?? $this->tanggal_te 
+            ?? $this->tanggal_in 
+            ?? $this->created_at;
     }
 
     /**
