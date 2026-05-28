@@ -3,18 +3,10 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RequestPurchasingController;
-use App\Http\Controllers\TechnicalEvaluationController;
-use App\Http\Controllers\ReTechnicalEvaluationController;
-use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ProcurementController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ReportController;
 
-use App\Models\RequestPurchasing;
-use App\Models\TechnicalEvaluation;
-use App\Models\ReTechnicalEvaluation;
-use App\Models\PurchaseOrder;
 use App\Models\Procurement;
 
 /*
@@ -42,17 +34,17 @@ Route::middleware('auth')->get('/dashboard', function () {
     | TOTAL DASHBOARD (REAL FROM PROCUREMENT)
     |----------------------------------------
     */
-    $totalRP = \App\Models\Procurement::where('status', 'Request Purchasing')->count();
-    $totalTE = \App\Models\Procurement::where('status', 'Technical Evaluation')->count();
-    $totalRETE = \App\Models\Procurement::where('status', 'Re-Technical Evaluation')->count();
-    $totalPO = \App\Models\Procurement::where('status', 'Purchase Order')->count();
+    $totalRP = Procurement::where('status', Procurement::STATUS_RP)->count();
+    $totalTE = Procurement::where('status', Procurement::STATUS_TE)->count();
+    $totalRETE = Procurement::where('status', Procurement::STATUS_RETE)->count();
+    $totalPO = Procurement::where('status', Procurement::STATUS_PO)->count();
 
     /*
     |----------------------------------------
     | DATA PROCUREMENT (REAL SYSTEM 1 TABLE)
     |----------------------------------------
     */
-    $procurements = \App\Models\Procurement::when($status, function ($query) use ($status) {
+    $procurements = Procurement::when($status, function ($query) use ($status) {
             return $query->where('status', $status);
         })
         ->orderBy('id', 'desc')
@@ -60,10 +52,11 @@ Route::middleware('auth')->get('/dashboard', function () {
         ->map(function ($item) {
             return [
                 'id' => $item->id,
-                'kode' => $item->kode,
-                'barang' => $item->barang,
+                'kode_pengadaan' => $item->kode_pengadaan,
+                'nama_barang' => $item->nama_barang,
+                'vendor' => $item->vendor,
                 'status' => $item->status,
-                'tanggal' => $item->tanggal,
+                'tanggal' => $item->tanggal?->format('Y-m-d'),
             ];
         });
 
@@ -109,6 +102,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/procurement/delete/{id}', [ProcurementController::class, 'destroy'])
         ->name('procurement.delete');
 
+    Route::post('/procurement/approve-phase/{id}', [ProcurementController::class, 'approvePhase'])
+        ->name('procurement.approve_phase');
+
 });
 
 /*
@@ -127,143 +123,6 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/profile', [ProfileController::class, 'destroy'])
         ->name('profile.destroy');
-
-});
-
-/*
-|--------------------------------------------------------------------------
-| REQUEST PURCHASING (RP)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware(['auth'])->group(function () {
-    
-    Route::get('/rp', [RequestPurchasingController::class, 'index'])
-        ->name('rp.index');
-    
-    Route::post('/rp/store', [RequestPurchasingController::class, 'store'])
-        ->name('rp.store');
-    
-    Route::put('/rp/update/{id}', [RequestPurchasingController::class, 'update'])
-        ->name('rp.update');
-
-    Route::delete('/rp/delete/{id}', [RequestPurchasingController::class, 'destroy'])
-        ->name('rp.delete');
-
-});
-
-/*
-|--------------------------------------------------------------------------
-| TECHNICAL EVALUATION (TE)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware('auth')->group(function () {
-
-    /*
-    |--------------------------------------------------------------------------
-    | HALAMAN TE
-    |--------------------------------------------------------------------------
-    */
-    Route::get('/te', [TechnicalEvaluationController::class, 'index'])
-        ->name('te.index');
-
-    /*
-    |--------------------------------------------------------------------------
-    | FORM CREATE
-    |--------------------------------------------------------------------------
-    */
-    Route::get('/te/create', [TechnicalEvaluationController::class, 'create'])
-        ->name('te.create');
-
-    /*
-    |--------------------------------------------------------------------------
-    | SIMPAN DATA TE
-    |--------------------------------------------------------------------------
-    */
-    Route::post('/te/store', [TechnicalEvaluationController::class, 'store'])
-        ->name('te.store');
-
-    /*
-    |--------------------------------------------------------------------------
-    | EDIT DATA TE
-    |--------------------------------------------------------------------------
-    */
-    Route::get('/te/edit/{id}', [TechnicalEvaluationController::class, 'edit'])
-        ->name('te.edit');
-
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE DATA TE
-    |--------------------------------------------------------------------------
-    */
-    Route::post('/te/update/{id}', [TechnicalEvaluationController::class, 'update'])
-        ->name('te.update');
-
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE DATA TE
-    |--------------------------------------------------------------------------
-    */
-    Route::delete('/te/delete/{id}', [TechnicalEvaluationController::class, 'destroy'])
-        ->name('te.delete');
-       
-
-});
-
-/*
-|--------------------------------------------------------------------------
-| RE-TECHNICAL EVALUATION (RE-TE)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware('auth')->group(function () {
-
-    Route::get('/rete', [ReTechnicalEvaluationController::class, 'index'])
-        ->name('rete.index');
-
-    Route::get('/rete/create', [ReTechnicalEvaluationController::class, 'create'])
-        ->name('rete.create');
-
-    Route::post('/rete/store', [ReTechnicalEvaluationController::class, 'store'])
-        ->name('rete.store');
-
-    Route::get('/rete/edit/{id}', [ReTechnicalEvaluationController::class, 'edit'])
-        ->name('rete.edit');
-
-    Route::post('/rete/update/{id}', [ReTechnicalEvaluationController::class, 'update'])
-        ->name('rete.update');
-
-    Route::delete('/rete/delete/{id}', [ReTechnicalEvaluationController::class, 'destroy'])
-        ->name('rete.delete');
-
-});
-
-/*
-|--------------------------------------------------------------------------
-| PURCHASE ORDER (PO)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware('auth')->group(function () {
-
-    Route::get('/po', [PurchaseOrderController::class, 'index'])
-        ->name('po.index');
-
-    Route::get('/po/create', [PurchaseOrderController::class, 'create'])
-        ->name('po.create');
-
-    Route::post('/po/store', [PurchaseOrderController::class, 'store'])
-        ->name('po.store');
-
-    Route::get('/po/edit/{id}', [PurchaseOrderController::class, 'edit'])
-        ->name('po.edit');
-
-    Route::post('/po/update/{id}', [PurchaseOrderController::class, 'update'])
-        ->name('po.update');
-
-    Route::delete('/po/delete/{id}', [PurchaseOrderController::class, 'destroy'])
-        ->name('po.delete');
 
 });
 
